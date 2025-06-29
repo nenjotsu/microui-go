@@ -1,3 +1,3 @@
-module github.com/zeozeozeo/microui-go
+module github.com/nenjotsu/microui-go
 
 go 1.19
