@@ -178,6 +178,8 @@ func (ctx *Context) TextboxRaw(buf *string, id mu_Id, r Rect, opt int) int {
 	ctx.UpdateControl(id, r, opt|MU_OPT_HOLDFOCUS)
 	buflen := len(*buf)
 
+	isPassword := (opt & MU_OPT_PASSWORD) != 0 // Check if password masking is enabled
+
 	if ctx.Focus == id {
 		// handle text input
 		if len(ctx.TextInput) > 0 {
@@ -198,20 +200,29 @@ func (ctx *Context) TextboxRaw(buf *string, id mu_Id, r Rect, opt int) int {
 
 	// draw
 	ctx.DrawControlFrame(id, r, MU_COLOR_BASE, opt)
+	// Determine text to display
+	displayText := *buf
+	if isPassword {
+		displayText = string(make([]rune, buflen))
+		for i := range displayText {
+			displayText = displayText[:i] + "*" + displayText[i+1:]
+		}
+	}
+
 	if ctx.Focus == id {
 		color := ctx.Style.Colors[MU_COLOR_TEXT]
 		font := ctx.Style.Font
-		textw := ctx.TextWidth(font, *buf)
+		textw := ctx.TextWidth(font, displayText)
 		texth := ctx.TextHeight(font)
 		ofx := r.W - ctx.Style.Padding - textw - 1
 		textx := r.X + mu_min(ofx, ctx.Style.Padding)
 		texty := r.Y + (r.H-texth)/2
 		ctx.PushClipRect(r)
-		ctx.DrawText(font, *buf, NewVec2(textx, texty), color)
+		ctx.DrawText(font, displayText, NewVec2(textx, texty), color)
 		ctx.DrawRect(NewRect(textx+textw, texty, 1, texth), color)
 		ctx.PopClipRect()
 	} else {
-		ctx.DrawControlText(*buf, r, MU_COLOR_TEXT, opt)
+		ctx.DrawControlText(displayText, r, MU_COLOR_TEXT, opt)
 	}
 
 	return res
